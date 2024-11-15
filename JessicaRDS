@@ -1,0 +1,151 @@
+importar 'pacote:flutter/material.dart';
+importar 'pacote:http/http.dart' como http;
+importar 'dart:convert';
+
+vazio principal() {
+  executarApp(MeuAplicativo());
+}
+
+classe MyApp estende StatelessWidget {
+  @substituir
+  Construção de widget (contexto BuildContext) {
+    retornar MaterialApp(
+      título: 'Pokémon App',
+      tema: ThemeData(
+        Amostra primária: Colors.blue,
+      ),
+      casa: PokemonScreen(),
+    );
+  }
+}
+
+classe PokemonScreen estende StatefulWidget {
+  @substituir
+  _PokemonScreenState createState() => _PokemonScreenState();
+}
+
+classe _PokemonScreenState estende State<PokemonScreen> {
+  // Variáveis para armazenar as informações do Pokémon
+  String _nomePokémon = '';
+  Sequência _pokemonImageUrl = '';
+  int _pokemonId = 0;
+  duplo _pokemonHeight = 0;
+  duplo _pokemonWeight = 0;
+  Lista<String> _pokemonTypes = [];
+  Lista<String> _pokemonAbilities = [];
+
+  // Função para buscar os dados da API
+  Futuro<void> fetchPokemonData(String pokemonName) assíncrono {
+    url final = Uri.parse('https://pokeapi.co/api/v2/pokemon/$pokemonName');
+    resposta final = await http.get(url);
+
+    se (resposta.statusCode == 200) {
+      dados finais = json.decode(response.body);
+      definirEstado(() {
+        _pokemonName = data['nome'];
+        _pokemonImageUrl = dados['sprites']['front_default'];
+        _pokemonId = dados['id'];
+        _pokemonHeight = dados['altura'] / 10; //Convertido para metros
+        _pokemonWeight = data['weight'] / 10; // Convertido para kg
+        _pokemonTypes = (data['tipos'] como Lista)
+            .map((typeInfo) => typeInfo['tipo']['nome'].toString())
+            .paraLista();
+        _pokemonAbilities = (data['habilidades'] como Lista)
+            .map((abilityInfo) => abilityInfo['habilidade']['nome'].toString())
+            .paraLista();
+      });
+    } outro {
+      // Caso ocorra um erro, mostre uma mensagem de erro
+      ScaffoldMessenger.of(contexto).showSnackBar(
+        SnackBar(content: Text('Erro ao buscar dados do Pokémon')),
+      );
+    }
+  }
+
+  final _pokemonController = TextEditingController();
+
+  @substituir
+  Construção de widget (contexto BuildContext) {
+    retornar Andaime(
+      Barra de aplicativos: Barra de aplicativos(
+        título: Text('Pokémon API'),
+      ),
+      corpo: preenchimento(
+        preenchimento: const EdgeInsets.all(16.0),
+        criança: Coluna(
+          crianças: [
+            Campo de texto(
+              controlador: _pokemonController,
+              decoração: InputDecoration(
+                labelText: 'Digite o nome do Pokémon',
+              ),
+            ),
+            SizedBox(altura: 10),
+            BotãoElevado(
+              onPressed: () {
+                fetchPokemonData(_pokemonController.text.toLowerCase());
+              },
+              filho: Texto('Buscar Pokémon'),
+            ),
+            SizedBox(altura: 20),
+            se (_pokemonName.isNotEmpty)
+              Expandido(
+                criança: SingleChildScrollView(
+                  criança: Coluna(
+                    crianças: [
+                      Imagem.rede(_pokemonImageUrl),
+                      SizedBox(altura: 10),
+                      Texto(
+                        'Nome: $_pokemonName',
+                        estilo: TextStyle(
+                            tamanho da fonte: 18, peso da fonte: FontWeight.bold),
+                      ),
+                      Texto(
+                        'ID: $_pokemonId',
+                        estilo: TextStyle(tamanhodafonte: 16),
+                      ),
+                      SizedBox(altura: 10),
+                      Texto(
+                        'Altura: ${_pokemonHeight.toStringAsFixed(1)} metros',
+                        estilo: TextStyle(tamanhodafonte: 16),
+                      ),
+                      Texto(
+                        'Peso: ${_pokemonWeight.toStringAsFixed(1)} kg',
+                        estilo: TextStyle(tamanhodafonte: 16),
+                      ),
+                      SizedBox(altura: 10),
+                      Texto(
+                        'Tipos:',
+                        estilo: TextStyle(
+                            tamanho da fonte: 16, peso da fonte: FontWeight.bold),
+                      ),
+                      Enrolar(
+                        crianças: _pokemonTypes
+                            .map((tipo) => Chip(
+                                  rótulo: Texto(tipo),
+                                ))
+                            .paraLista(),
+                      ),
+                      SizedBox(altura: 10),
+                      Texto(
+                        'Habilidades:',
+                        estilo: TextStyle(
+                            tamanho da fonte: 16, peso da fonte: FontWeight.bold),
+                      ),
+                      Enrolar(
+                        crianças: _pokemonAbilities
+                            .map((habilidade) => Chip(
+                                  rótulo: Texto(habilidade),
+                                ))
+                            .paraLista(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
